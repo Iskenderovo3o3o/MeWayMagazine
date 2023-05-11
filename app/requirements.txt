@@ -5,7 +5,7 @@ Pillow
 python-decouple
 drf-yasg
 django-filter
-
+gunicorn
 # обработчик задач
 celery
 # брокер сообщений, бд для кэша

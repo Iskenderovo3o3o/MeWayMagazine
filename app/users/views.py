@@ -1,10 +1,8 @@
-from django.shortcuts import render
 from rest_framework import generics, permissions
-from rest_framework.authtoken.models import Token
 from rest_framework.response import Response
 
-from users.models import User
-from users.serializers import UserSerializer
+from app.users.models import User
+from app.users.serializers import UserSerializer
 
 
 class CreateUserView(generics.CreateAPIView):
