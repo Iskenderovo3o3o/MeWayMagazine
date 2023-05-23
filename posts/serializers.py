@@ -1,25 +1,24 @@
 from rest_framework import serializers
 from .models import Promotion, Comment, Company, Category
+from django.db import models
+from users.models import User
 
 
 class PromotionSerializer(serializers.ModelSerializer):
-    created_at = serializers.DateTimeField(format="%d.%m.%Y")
-    updated_at = serializers.DateTimeField(format="%d.%m.%Y %H:%M:%S")
-
+    get_likes = serializers.ReadOnlyField()
+    
     class Meta:
         model = Promotion
-        fields = ['name', 'description', 'price', 'discount', 'image', 'created_at', 'updated_at', 'time_discount']
+        fields = ['name', 'description', 'price', 'discount', 'image', 'created_at', 'updated_at', 'time_discount','get_likes',]     
+
 
 
 class CommentSerializer(serializers.ModelSerializer):
-    user = serializers.PrimaryKeyRelatedField(read_only=True, default=serializers.CurrentUserDefault())
-
     class Meta:
         model = Comment
-        fields = ['id', 'user', 'article', 'text', 'created_at', 'updated_at', 'sub_comment']
-        read_only_fields = ['article']
+        fields = '__all__'
 
-
+    
 class CompanySerializer(serializers.ModelSerializer):
     class Meta:
         model = Company
@@ -48,3 +47,7 @@ class PromotionCountSerializer(serializers.ModelSerializer):
     class Meta:
         model = Category
         fields = ['id', 'promotions', 'promotions_count']
+
+
+
+

@@ -1,13 +1,17 @@
 from django.db.models import Count
-from rest_framework import generics, mixins, permissions, viewsets
+from rest_framework import permissions, viewsets
 from rest_framework.decorators import action
 from rest_framework.filters import SearchFilter
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.permissions import IsAuthenticated
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.response import Response
+from rest_framework.views import APIView
+from rest_framework.generics import  get_object_or_404
+from django.db import IntegrityError
+from rest_framework import status
 
-from .models import Promotion, Comment, Company, Category, PromotionFilter, CompanyFilter
+from .models import Promotion, Comment, Company, Category, PromotionFilter, CompanyFilter,LikePromotion
 from .permissions import IsAuthor
 from .serializers import (
     PromotionSerializer,
@@ -23,6 +27,8 @@ class PromotionViewSet(viewsets.ModelViewSet):
     serializer_class = PromotionSerializer
     filter_backends = [DjangoFilterBackend]
     filterset_class = PromotionFilter
+    serializer_class = PromotionSerializer
+
 
     def get_serializer_context(self):
         context = super().get_serializer_context()
@@ -32,11 +38,10 @@ class PromotionViewSet(viewsets.ModelViewSet):
     def get_permissions(self):
         if self.request.method == 'POST':
             self.permission_classes = [IsAuthenticated]
-        elif self.action in ['update', 'partial_update', 'destroy']:
-            self.permission_classes = [IsAuthor]
         else:
             self.permission_classes = [permissions.AllowAny]
         return super().get_permissions()
+    
 
 
 class CommentViewSet(viewsets.ModelViewSet):
@@ -81,6 +86,7 @@ class CompanyViewSet(viewsets.ModelViewSet):
     search_fields = ['name', 'description']
     filterset_class = CompanyFilter
 
+
     def get_serializer_context(self):
         context = super().get_serializer_context()
         context.update({'request': self.request})
@@ -117,3 +123,19 @@ class PromotionCountView(viewsets.ViewSet):
         queryset = self.queryset.annotate(promotions_count=Count('promotions'))
         serializer = self.serializer_class(queryset, many=True)
         return Response(serializer.data)
+    
+
+class PostPromotionLike(APIView):
+    def get(self, request, promotion_id):
+        promotion = get_object_or_404(Promotion, id=promotion_id)
+        try:
+            like = LikePromotion.objects.create(promotion=promotion, user=request.user)
+        except IntegrityError:
+            like = LikePromotion.objects.filter(promotion=promotion, user=request.user).delete()
+            data = {f"Лайк для {promotion_id} акции убрал пользователь {request.user.email}"}
+            return Response(data, status=status.HTTP_200_OK)
+        else:
+            data = {'message': f"лайк акции {promotion_id} поставил пользователь {request.user.email}"}
+            return Response(data, status=status.HTTP_201_CREATED)
+        
+

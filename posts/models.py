@@ -17,6 +17,11 @@ class Promotion(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
     time_discount = models.DurationField(default=timedelta(days=7))
 
+    def get_likes(self):
+        likes = LikePromotion.objects.filter(promotion=self)
+        return likes.count()
+    
+
     class Meta:
         verbose_name = 'Акция'
         verbose_name_plural = 'Акции'
@@ -38,11 +43,11 @@ class Comment(models.Model):
         verbose_name = 'Комментарий'
         verbose_name_plural = 'Комментарии'
 
-    def __str__(self):
-        return f'Комментарий от {self.user.username}'
-
+    def __str__(self) -> str:
+        return str(self.user)
 
 class Company(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
     name = models.CharField(max_length=100)
     description = models.TextField()
     stock_count = models.IntegerField(default=0)
@@ -110,4 +115,12 @@ class CompanyFilter(django_filters.FilterSet):
     class Meta:
         model = Company
         fields = ['name', 'discount']
+
+
+class LikePromotion(models.Model):
+    promotion = models.ForeignKey(Promotion, on_delete=models.CASCADE)
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+
+    class Meta:
+        unique_together = ('user', 'promotion')
 
